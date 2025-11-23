@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Download, Upload, X, Copy, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Send, Loader2, Download, Upload, X, Copy, Check, LogOut } from 'lucide-react';
 import { testPrompt } from '@/lib/api';
+import { isAuthenticated, logout, getCurrentUser } from '@/lib/auth';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -76,9 +78,17 @@ Perfeito! Confirme esta resposta no checklist clicando em ''Confirmar resposta''
     { id: 'mistralai/mistral-small-3.1-24b-instruct', name: 'Mistral Small 3.1 24B Instruct' },
   ];
 
+  const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Verificar autenticação
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -87,6 +97,11 @@ Perfeito! Confirme esta resposta no checklist clicando em ''Confirmar resposta''
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Não renderizar se não estiver autenticado
+  if (!isAuthenticated()) {
+    return null;
+  }
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -279,6 +294,14 @@ Perfeito! Confirme esta resposta no checklist clicando em ''Confirmar resposta''
                 Desenvolva e teste prompts antes de colocar em produção
               </p>
             </div>
+            <button
+              onClick={logout}
+              className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-1.5"
+              title="Sair"
+            >
+              <LogOut size={14} />
+              Sair
+            </button>
           </div>
           
           {/* Contador de Tokens */}
